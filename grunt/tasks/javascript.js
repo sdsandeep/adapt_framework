@@ -37,11 +37,11 @@ module.exports = function(grunt) {
   };
 
   const saveCache = async (cachePath, basePath, bundleCache) => {
-    if (!disableCache)
+    if (!disableCache) {
       cache = bundleCache;
     }
     await new Promise((resolve, reject) => {
-      let str = JSON.stringify(cache);
+      let str = JSON.stringify(bundleCache);
       // Make cache location agnostic by stripping current basePath
       str = str.replace(new RegExp(escapeRegExp(basePath), 'g'), '%%basePath%%');
       deflate(str, { level: constants.Z_BEST_COMPRESSION }, (err, buffer) => {
