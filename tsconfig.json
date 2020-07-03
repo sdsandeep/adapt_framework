@@ -1,0 +1,13 @@
+{
+  "allowJs": true,
+  "checkJs": true,
+  "compilerOptions": {
+    "allowUmdGlobalAccess": true,
+    "target": "es6",
+    "baseUrl": "./src/"
+  },
+  "exclude": [
+    "node_modules",
+    "**/node_modules/**"
+  ]
+}
