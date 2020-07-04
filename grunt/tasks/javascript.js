@@ -13,11 +13,12 @@ module.exports = function(grunt) {
   const { babel, getBabelOutputPlugin } = require('@rollup/plugin-babel');
   const { deflate, unzip, constants } = require('zlib');
 
-  const disableCache = process.argv.includes('--disable-cache');
+  const isTypeChecking = process.argv.includes('--check-types');
+  const isDisableCache = process.argv.includes('--disable-cache');
   let cache;
 
   const restoreCache = async (cachePath, basePath) => {
-    if (disableCache || cache || !fs.existsSync(cachePath)) return;
+    if (isDisableCache || cache || !fs.existsSync(cachePath)) return;
     await new Promise((resolve, reject) => {
       const buffer = fs.readFileSync(cachePath);
       unzip(buffer, (err, buffer) => {
@@ -37,7 +38,7 @@ module.exports = function(grunt) {
   };
 
   const saveCache = async (cachePath, basePath, bundleCache) => {
-    if (!disableCache) {
+    if (!isDisableCache) {
       cache = bundleCache;
     }
     await new Promise((resolve, reject) => {
@@ -57,7 +58,38 @@ module.exports = function(grunt) {
     });
   };
 
+  const logPrettyError = (err) => {
+    let hasOutput = false;
+    if (err.loc) {
+      // Code error
+      const cwd = process.cwd().replace(convertSlashes, '/') + '/';
+      switch (err.plugin) {
+        case 'typescript':
+          err.id = err.loc.file
+          break;
+        case 'babel':
+          err.frame = err.message.substr(err.message.indexOf('\n')+1);
+          err.message = err.message.substr(0, err.message.indexOf('\n')).slice(2).replace(/^([^:]*): /, '');
+          break;
+        default:
+          hasOutput = true;
+          console.log('error', err);
+      }
+      if (!hasOutput) {
+        grunt.log.error(err.message);
+        grunt.log.error(`Line: ${err.loc.line}, Col: ${err.loc.column}, File: ${err.id.replace(cwd, '')}`);
+        console.log(err.frame);
+        hasOutput = true;
+      }
+    }
+    if (!hasOutput) {
+      console.log(err);
+    }
+  };
+
   grunt.registerMultiTask('javascript', 'Compile JavaScript files', async function() {
+    grunt.log.ok(`Cache disabled (--disable-cache): ${isDisableCache}`);
+    grunt.log.ok(`Type check (--check-types): ${isTypeChecking}`);
     const done = this.async();
     const options = this.options({});
     const isSourceMapped = Boolean(options.generateSourceMaps);
@@ -194,9 +226,14 @@ module.exports = function(grunt) {
       input: './' + options.baseUrl +  options.name,
       shimMissingExports: true,
       plugins: [
-        typescript({}),
         adaptLoader({}),
         adaptInjectPlugins({}),
+        isTypeChecking && typescript({
+          // Process & infer types from .js files.
+          "allowJs": false,
+          // Don't emit; allow Babel to transform files.
+          "noEmit": false
+        }),
         babel({
           babelHelpers: 'bundled',
           extensions: ['.ts', '.js'],
@@ -215,9 +252,12 @@ module.exports = function(grunt) {
                   "transform-function-name"
                 ],
               }
-            ]
-          ],
+            ],
+            !isTypeChecking && '@babel/preset-typescript'
+          ].filter(Boolean),
           plugins: [
+            !isTypeChecking && "@babel/proposal-class-properties",
+			      !isTypeChecking && "@babel/proposal-object-rest-spread",
             [
               'transform-amd-to-es6',
               {
@@ -227,9 +267,9 @@ module.exports = function(grunt) {
                 defineModuleId: (moduleId) => moduleId.replace(convertSlashes,'/').replace(basePath, '').replace('\.js', '').replace('\.ts', '')
               }
             ]
-          ]
+          ].filter(Boolean)
         })
-      ],
+      ].filter(Boolean),
       cache
     };
 
@@ -265,7 +305,7 @@ window.__AMD = function(id, value) {
       await saveCache(options.cachePath, basePath, bundle.cache);
       await bundle.write(outputOptions);
     } catch (err) {
-      console.log(err);
+      logPrettyError(err);
     }
 
     // Remove old sourcemap if no longer required

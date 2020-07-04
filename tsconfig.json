@@ -1,9 +1,14 @@
 {
-  "allowJs": true,
-  "checkJs": true,
   "compilerOptions": {
     "allowUmdGlobalAccess": true,
-    "target": "es6",
+		// Target latest version of ECMAScript.
+		"target": "esnext",
+		// Process & infer types from .js files.
+		"allowJs": true,
+		// Don't emit; allow Babel to transform files.
+		"noEmit": true,
+		// Import non-ES modules as default imports.
+		"esModuleInterop": true,
     "baseUrl": "./src/"
   },
   "exclude": [

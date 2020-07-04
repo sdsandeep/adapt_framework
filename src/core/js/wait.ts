@@ -1,30 +1,30 @@
-define(function() {
+import { EventHandler } from "backbone";
 
-  var Wait = Backbone.Controller.extend({
+export default class Wait extends Backbone.Controller {
 
-    initialize: function() {
+    initialize() {
       _.bindAll(this, 'begin', 'end');
-    },
+    }
 
-    _waitCount: 0,
-    _callbackHandle: null,
-    _timeoutHandlerId: null,
-    _timeoutInSeconds: 7,
+    _waitCount: number = 0;
+    _callbackHandle = null;
+    _timeoutHandlerId = null;
+    _timeoutInSeconds: number = 7;
 
     /**
-       * Returns true if there are items in the waiting count.
-       *
-       * @return {Boolean}
-       */
-    isWaiting: function() {
+     * Returns true if there are items in the waiting count.
+     *
+     * @return {Boolean}
+     */
+    isWaiting() {
       return (this._waitCount !== 0);
-    },
+    }
 
     /**
-       * Starts or re-starts a timer to ensure that pending calls to end()
-       * are actually executed after a timeout period.
-       */
-    startTimer: function() {
+     * Starts or re-starts a timer to ensure that pending calls to end()
+     * are actually executed after a timeout period.
+     */
+    startTimer() {
       this.stopTimer();
 
       this._timeoutHandlerId = setInterval(function() {
@@ -38,23 +38,23 @@ define(function() {
           this.stopTimer();
         }
       }.bind(this), this._timeoutInSeconds * 1000);
-    },
+    }
 
     /**
-       * Clears the timer.
-       */
-    stopTimer: function() {
+     * Clears the timer.
+     */
+    stopTimer() {
       if (this._timeoutHandlerId) {
         clearInterval(this._timeoutHandlerId);
       }
-    },
+    }
 
     /**
-       * Add one item to the waiting count.
-       *
-       * @return {Object}
-       */
-    begin: function() {
+     * Add one item to the waiting count.
+     *
+     * @return {Object}
+     */
+    begin() {
 
       if (!this.isWaiting()) {
         this.trigger('wait');
@@ -71,14 +71,14 @@ define(function() {
 
       return this;
 
-    },
+    }
 
     /**
-       * Remove an item from the waiting count and trigger ready asynchronously if no more items are waiting.
-       *
-       * @return {Object}
-       */
-    end: function() {
+     * Remove an item from the waiting count and trigger ready asynchronously if no more items are waiting.
+     *
+     * @return {Object}
+     */
+    end() {
 
       if (!this.isWaiting()) {
         return this;
@@ -107,15 +107,15 @@ define(function() {
 
       return this;
 
-    },
+    }
 
     /**
-       * Queue this function until all open waits have been ended.
-       *
-       * @param  {Function} [callback]
-       * @return {Object|Promise}
-       */
-    queue: function(callback) {
+     * Queue this function until all open waits have been ended.
+     *
+     * @param  {Function} [callback]
+     * @return {Object|Promise}
+     */
+    queue(callback?: EventHandler) {
 
       if (!callback) {
         this.begin();
@@ -131,15 +131,15 @@ define(function() {
 
       return this;
 
-    },
+    }
 
     /**
-       * Wait for this asynchronous function to execute before triggering ready event.
-       *
-       * @param  {Function} callback   [ Function to execute whilst holding queued callback. Once complete run first argument, done(). ]
-       * @return {Object}
-       */
-    for: function(callback) {
+     * Wait for this asynchronous function to execute before triggering ready event.
+     *
+     * @param  {Function} callback   [ Function to execute whilst holding queued callback. Once complete run first argument, done(). ]
+     * @return {Object}
+     */
+    for(callback: Function) {
 
       this.begin();
       _.defer(function() {
@@ -150,8 +150,5 @@ define(function() {
 
     }
 
-  });
+  }
 
-  return Wait;
-
-});
