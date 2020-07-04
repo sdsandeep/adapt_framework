@@ -13,7 +13,6 @@ module.exports = function(grunt) {
   const { babel, getBabelOutputPlugin } = require('@rollup/plugin-babel');
   const { deflate, unzip, constants } = require('zlib');
 
-  const isTypeChecking = process.argv.includes('--check-types');
   const isDisableCache = process.argv.includes('--disable-cache');
   let cache;
 
@@ -91,7 +90,6 @@ module.exports = function(grunt) {
 
   grunt.registerMultiTask('javascript', 'Compile JavaScript files', async function() {
     grunt.log.ok(`Cache disabled (--disable-cache): ${isDisableCache}`);
-    grunt.log.ok(`Type check (--check-types): ${isTypeChecking}`);
     const done = this.async();
     const options = this.options({});
     const isSourceMapped = Boolean(options.generateSourceMaps);
@@ -230,7 +228,7 @@ module.exports = function(grunt) {
       plugins: [
         adaptLoader({}),
         adaptInjectPlugins({}),
-        isTypeChecking && typescript({
+        typescript({
           // Process & infer types from .js files.
           "allowJs": false,
           // Don't emit; allow Babel to transform files.
@@ -255,11 +253,8 @@ module.exports = function(grunt) {
                 ],
               }
             ],
-            !isTypeChecking && '@babel/preset-typescript'
-          ].filter(Boolean),
+          ],
           plugins: [
-            !isTypeChecking && "@babel/proposal-class-properties",
-			      !isTypeChecking && "@babel/proposal-object-rest-spread",
             [
               'transform-amd-to-es6',
               {
@@ -269,9 +264,9 @@ module.exports = function(grunt) {
                 defineModuleId: (moduleId) => moduleId.replace(convertSlashes,'/').replace(basePath, '').replace('\.js', '').replace('\.ts', '')
               }
             ]
-          ].filter(Boolean)
+          ]
         })
-      ].filter(Boolean),
+      ],
       cache
     };
 
