@@ -150,6 +150,21 @@
     "_globals": {
       "type": "object",
       "properties": {
+        "_siteInfo":{
+          "type": "object",
+          "title": "siteInfo",
+          "properties": {
+              "logo":{
+                "type": "string",
+                "title": "logo image",
+                "default": "",
+                "inputType": "Asset:image",
+                "validators": [],
+                "editorOnly": true,
+                "help": "The image that will be shown in navigation panel of topic"
+            }
+          }
+        }
         "_accessibility": {
           "type": "object",
           "title": "Accessibility",
